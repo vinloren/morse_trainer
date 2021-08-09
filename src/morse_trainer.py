@@ -1,12 +1,30 @@
 import socket
-target_host = "192.168.1.5"
-target_port = 8888
-# create a socket connection
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# let the client connect
-client.connect((target_host, target_port))
-# send some data
-client.send("SYN")
-# get some data
-response = client.recv(4096)
-print response
+import sys
+
+def invia_comandi(s):
+    while True:
+        comando = input("-> ")
+        if comando == "ESC":
+            print("Sto chiudendo la connessione col Server.")
+            s.close()
+            sys.exit()
+        else:
+            comando = comando+"\r\n"
+            s.send(comando.encode())
+            data = s.recv(4096)
+            print(str(data, "utf-8"))
+
+def conn_sub_server(indirizzo_server):
+    try:
+        s = socket.socket()             # creazione socket client
+        s.connect(indirizzo_server)     # connessione al server
+        print(f"Connessessione al Server: { indirizzo_server } effettuata.")
+    except socket.error as errore:
+        print(f"Qualcosa è andato storto, sto uscendo... \n{errore}")
+        sys.exit()
+    data = s.recv(4096)
+    print(str(data, "utf-8"))
+    invia_comandi(s)
+
+if __name__ == '__main__':
+    conn_sub_server(("192.168.1.5", 8888))

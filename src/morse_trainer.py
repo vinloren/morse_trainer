@@ -124,20 +124,16 @@ class App(QWidget):
             print("preparo 10 gruppi di 5 chars")
             i = 0
             j = 0
-            pacchetto = []
+            s = ""
             while(i<10):
                 while(j<5):
                     x = random.randint(0,len(self.datachrs)-1)
-                    pacchetto.append(self.datachrs[x])
+                    s += self.datachrs[x]
                     j += 1
-                pacchetto.append(' ')
-                #print(str(pacchetto))
+                s += ' '
                 i += 1
                 j = 0
-            #print(pacchetto)
-            s = ""
-            for x in pacchetto:
-                s += x 
+            s = s.upper()
             print(s)
             self.invia_comandi(s)
             self.xmt.append(s)

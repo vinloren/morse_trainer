@@ -1,5 +1,6 @@
 import socket
 import sys
+import random
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget,  \
             QVBoxLayout,QHBoxLayout,QLineEdit,QTextEdit,QLabel,QCheckBox, \
             QPushButton,QRadioButton,QComboBox    
@@ -8,6 +9,11 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget,  \
 class App(QWidget):
     s = socket.socket()
     CONNECTED = False
+    datachrs = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', \
+                'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',\
+                 'w', 'x', 'y', 'z','1','2','3','4','5','6','7','8','9','0', \
+                 '?','/',',','.','=']
+
     def __init__(self):
         super().__init__()
         self.title = 'Morse Trainer'
@@ -82,6 +88,8 @@ class App(QWidget):
         self.layout.addLayout(hmed)
         self.layout.addLayout(hbot)
         self.layout.addLayout(hnbot)
+        self.radiob = QRadioButton("send 10 groups of 5 random chars each in place of data in transmit box")
+        self.layout.addWidget(self.radiob)
         sendbtn = QPushButton("SEND DATA",self)
         sendbtn.clicked.connect(self.send_click)
         self.layout.addWidget(sendbtn)
@@ -104,13 +112,35 @@ class App(QWidget):
             self.invia_comandi("ESC") 
 
     def send_click(self):
-        data = self.xmt.toPlainText()
-        riga = data.split("\n")
-        l = len(riga)
-        testo = riga[l-2]
-        print(testo) # stampa ultima riga (da ultimo \n in poi)
-        self.invia_comandi(testo)
-
+        if(self.radiob.isChecked() == False):
+            data = self.xmt.toPlainText()
+            riga = data.split("\n")
+            l = len(riga)
+            testo = riga[l-2]
+            print(testo) # stampa ultima riga (da ultimo \n in poi)
+            self.invia_comandi(testo)
+        else:
+            # crea 10 gruppi random di 5 chars in una stringa
+            print("preparo 10 gruppi di 5 chars")
+            i = 0
+            j = 0
+            pacchetto = []
+            while(i<10):
+                while(j<5):
+                    x = random.randint(0,len(self.datachrs)-1)
+                    pacchetto.append(self.datachrs[x])
+                    j += 1
+                pacchetto.append(' ')
+                #print(str(pacchetto))
+                i += 1
+                j = 0
+            #print(pacchetto)
+            s = ""
+            for x in pacchetto:
+                s += x 
+            print(s)
+            self.invia_comandi(s)
+            self.xmt.append(s)
 
     def set_speed_click(self):
         speed = self.cmbspeed.currentText()
@@ -157,4 +187,3 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = App()
     sys.exit(app.exec_())  
-    #conn_sub_server(("192.168.1.5", 8888))

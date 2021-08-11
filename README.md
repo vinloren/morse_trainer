@@ -12,4 +12,5 @@ Basically the text entered in the transmit window is sent to the keyer to be pla
 This way the user can test his ability and trained to improve it comparing the data detected in morse with the final display of what was actually sent.
 Each tsequence cam be easyly repeated since it is kept in the transmit window.
 
-Another added feature is the possibility to continuosly send, at a pace of 2 minutes, 10 groups of 5 random chars
+Another added feature is the possibility to continuosly send 10 groups of 5 random chars every two minutes.
+ 

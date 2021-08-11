@@ -1,6 +1,9 @@
 import socket
 import sys
 import random
+import threading
+import datetime
+import time
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget,  \
             QVBoxLayout,QHBoxLayout,QLineEdit,QTextEdit,QLabel,QCheckBox, \
             QPushButton,QRadioButton,QComboBox    
@@ -88,14 +91,37 @@ class App(QWidget):
         self.layout.addLayout(hmed)
         self.layout.addLayout(hbot)
         self.layout.addLayout(hnbot)
-        self.radiob = QRadioButton("send 10 groups of 5 random chars each in place of data in transmit box")
-        self.layout.addWidget(self.radiob)
-        sendbtn = QPushButton("SEND DATA",self)
-        sendbtn.clicked.connect(self.send_click)
-        self.layout.addWidget(sendbtn)
+        self.radiob = QRadioButton("Send 10 groups of 5 random chars")
+        self.radiob1 = QRadioButton("Automatic sending groups of 5 chars")
+        self.radiob2 = QRadioButton("Send from transmit box")
+        self.radiob.clicked.connect(self.checkb)
+        self.radiob1.clicked.connect(self.checkb1)
+        self.radiob2.clicked.connect(self.checkb2)
+        hlast = QHBoxLayout()
+        hlast.addWidget(self.radiob)
+        hlast.addWidget(self.radiob1)
+        hlast.addWidget(self.radiob2)
+        self.layout.addLayout(hlast)
+        self.sendbtn = QPushButton("SEND DATA",self)
+        self.sendbtn.clicked.connect(self.send_click)
+        self.layout.addWidget(self.sendbtn)
+        self.radiob2.setChecked(True)
         #hhome.addWidget(voidlbl)
         self.setGeometry(100, 50, 620,400)
         self.show()
+
+    def checkb(self):
+        print("Invio 10 gruppi di 5 chars")
+        self.sendbtn.setEnabled(True)
+
+    def checkb1(self):
+        print("Invio continuo di 10 gruppi di 5 chars")
+        self.sendbtn.setEnabled(False)
+
+    def checkb2(self):
+        print("Invio da transmit box")
+        self.sendbtn.setEnabled(True)
+
 
     def clear_snd(self):
         self.xmt.clear()
@@ -109,6 +135,7 @@ class App(QWidget):
             port = int(self.port.text())
             self.conn_sub_server((host,port))  
         else:
+            self.rt.stop()
             self.invia_comandi("ESC") 
 
     def send_click(self):
@@ -122,32 +149,28 @@ class App(QWidget):
         else:
             # crea 10 gruppi random di 5 chars in una stringa
             print("preparo 10 gruppi di 5 chars")
-            i = 0
-            j = 0
-            s = ""
-            while(i<10):
-                while(j<5):
-                    x = random.randint(0,len(self.datachrs)-1)
-                    s += self.datachrs[x]
-                    j += 1
-                s += ' '
-                i += 1
-                j = 0
-            s = s.upper()
-            print(s)
-            self.invia_comandi(s)
-            self.xmt.append(s)
+            self.inviaGruppi()
+        data = self.s.recv(4096)
+        self.rcv.append(str(data,"utf-8"))
+        print(str(data, "utf-8"))
+
 
     def set_speed_click(self):
         speed = self.cmbspeed.currentText()
         print(speed)
         self.invia_comandi(speed)
+        data = self.s.recv(4096)
+        print(str(data, "utf-8"))
+        self.rcv.append(speed+' '+str(data,"utf-8"))
 
 
     def tone_click(self):
         tone = self.cmbtone.currentText()
         print("Tone Hz: "+tone )
         self.invia_comandi(tone)
+        data = self.s.recv(4096)
+        print(str(data, "utf-8"))
+        self.rcv.append("Tone "+tone+'Hz '+str(data,"utf-8"))
 
 
     def conn_sub_server(self,indirizzo_server):
@@ -163,6 +186,37 @@ class App(QWidget):
         data = self.s.recv(4096)
         print(str(data, "utf-8"))
         self.rcv.append(str(data,"utf-8"))
+        self.rt = RepeatedTimer(120, ex.sendText) # no need of rt.start()
+
+
+    def sendText(self): # called every x seconds
+        currTime = datetime.datetime.now().strftime("%H:%M:%S")
+        if(self.radiob1.isChecked() == False):
+            print("Nothing to do at "+currTime)
+        else:
+            self.rcv.append("Inizio trasmissione 10 gruppi 5chars at "+currTime)
+            self.inviaGruppi()
+            
+
+    def inviaGruppi(self):
+        i = 0
+        j = 0
+        s = ""
+        while(i<10):
+            while(j<5):
+                x = random.randint(0,len(self.datachrs)-1)
+                s += self.datachrs[x]
+                j += 1
+            s += ' '
+            i += 1
+            j = 0
+        s = s.upper()
+        print(s)
+        self.invia_comandi(s)
+        data = self.s.recv(4096)
+        self.rcv.append(str(data,"utf-8"))
+        print(str(data, "utf-8"))
+        self.xmt.append(s)
 
 
     def invia_comandi(self,comando):
@@ -173,10 +227,37 @@ class App(QWidget):
         else:
             comando = comando+"\r\n"
             self.s.send(comando.encode())
-            data = self.s.recv(4096)
-            self.rcv.append(str(data,"utf-8"))
-            print(str(data, "utf-8"))
             
+            
+
+class RepeatedTimer(object): # Timer helper class
+  def __init__(self, interval, function, *args, **kwargs):
+    self._timer = None
+    self.interval = interval
+    self.function = function
+    self.args = args
+    self.kwargs = kwargs
+    self.is_running = False
+    self.next_call = time.time()
+    self.start()
+
+  def _run(self):
+    self.is_running = False
+    self.start()
+    self.function(*self.args, **self.kwargs)
+
+  def start(self):
+    if not self.is_running:
+      self.next_call += self.interval
+      self._timer = threading.Timer(self.next_call - time.time(), self._run)
+      self._timer.start()
+      self.is_running = True
+      print("Timer app started")
+
+  def stop(self):
+    self._timer.cancel()
+    self.is_running = False
+
 
 
 if __name__ == '__main__':

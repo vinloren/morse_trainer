@@ -4,10 +4,12 @@ import random
 import threading
 import datetime
 import time
+from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget,  \
             QVBoxLayout,QHBoxLayout,QLineEdit,QTextEdit,QLabel,QCheckBox, \
             QPushButton,QRadioButton,QComboBox    
 
+TIME_LIMIT = 120
 
 class App(QWidget):
     s = socket.socket()
@@ -116,6 +118,7 @@ class App(QWidget):
 
     def checkb1(self):
         print("Invio continuo di 10 gruppi di 5 chars")
+        self.repeatSend.start()
         self.sendbtn.setEnabled(False)
 
     def checkb2(self):
@@ -135,7 +138,7 @@ class App(QWidget):
             port = int(self.port.text())
             self.conn_sub_server((host,port))  
         else:
-            self.rt.stop()
+            #self.rt.stop()
             self.invia_comandi("ESC") 
 
     def send_click(self):
@@ -186,17 +189,21 @@ class App(QWidget):
             sys.exit()
         data = self.s.recv(4096)
         print(str(data, "utf-8"))
+        self.repeatSend = RepeatedTimer()
+        self.repeatSend.countChanged.connect(self.onCountChanged)
         self.rcv.append(str(data,"utf-8"))
-        self.rt = RepeatedTimer(120, ex.sendText) # no need of rt.start()
 
 
-    def sendText(self): # called every x seconds
+    def onCountChanged(self, value):
         currTime = datetime.datetime.now().strftime("%H:%M:%S")
         if(self.radiob1.isChecked() == False):
             print("Nothing to do at "+currTime)
         else:
-            self.rcv.append("Inizio trasmissione 10 gruppi 5chars at "+currTime)
-            self.inviaGruppi()
+            self.repeatSend.start()
+            if(value == 0):
+                self.rcv.append("Preparo trasmissione 10 gruppi 5chars at "+currTime)
+            else:
+                self.inviaGruppi()
             
 
     def inviaGruppi(self):
@@ -229,36 +236,26 @@ class App(QWidget):
         else:
             comando = comando+"\r\n"
             self.s.send(comando.encode())
-            
-            
 
-class RepeatedTimer(object): # Timer helper class
-  def __init__(self, interval, function, *args, **kwargs):
-    self._timer = None
-    self.interval = interval
-    self.function = function
-    self.args = args
-    self.kwargs = kwargs
-    self.is_running = False
-    self.next_call = time.time()
-    self.start()
 
-  def _run(self):
-    self.is_running = False
-    self.start()
-    self.function(*self.args, **self.kwargs)
+class RepeatedTimer(QThread):
 
-  def start(self):
-    if not self.is_running:
-      self.next_call += self.interval
-      self._timer = threading.Timer(self.next_call - time.time(), self._run)
-      self._timer.start()
-      self.is_running = True
-      print("Timer app started")
+    countChanged = pyqtSignal(int)
 
-  def stop(self):
-    self._timer.cancel()
-    self.is_running = False
+    def run(self):
+        print("Start timer")
+        count = 0
+        self.countChanged.emit(count)
+        while count < TIME_LIMIT:
+            count +=1
+            time.sleep(1)
+        print("Raggiunto limite tempo")
+        self.countChanged.emit(count)
+
+    def stop(self):
+        self.is_running = False
+        self.terminate()
+         
 
 
 

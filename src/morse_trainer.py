@@ -146,14 +146,15 @@ class App(QWidget):
             testo = riga[l-2]
             print(testo) # stampa ultima riga (da ultimo \n in poi)
             self.invia_comandi(testo)
+            data = self.s.recv(4096)
+            data = str(data, "utf-8")
+            self.rcv.append("Dati da transmit box: "+data )
+            print(data)
         else:
             # crea 10 gruppi random di 5 chars in una stringa
             print("preparo 10 gruppi di 5 chars")
             self.inviaGruppi()
-        data = self.s.recv(4096)
-        self.rcv.append(str(data,"utf-8"))
-        print(str(data, "utf-8"))
-
+        
 
     def set_speed_click(self):
         speed = self.cmbspeed.currentText()
@@ -214,8 +215,9 @@ class App(QWidget):
         print(s)
         self.invia_comandi(s)
         data = self.s.recv(4096)
-        self.rcv.append(str(data,"utf-8"))
-        print(str(data, "utf-8"))
+        data = str(data,"utf-8")
+        self.rcv.append("Invio gruppi di chars: "+data)
+        print(data)
         self.xmt.append(s)
 
 

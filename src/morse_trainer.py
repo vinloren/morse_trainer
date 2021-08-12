@@ -179,7 +179,6 @@ class App(QWidget):
 
     def conn_sub_server(self,indirizzo_server):
         try:
-            #s = socket.socket()             # creazione socket client
             self.s.connect(indirizzo_server)     # connessione al server
             print(f"Connessessione al Server: { indirizzo_server } effettuata.")
             self.CONNECTED = True

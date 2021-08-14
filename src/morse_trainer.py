@@ -10,15 +10,24 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget,  \
             QPushButton,QRadioButton,QComboBox    
 
 TIME_LIMIT = 120
+clientSock = socket.socket()
+recvData = ""
+sendData = ""
+host = "192.168.1.5"
+port = 8888
+CONNECTED = False
+INVIA = False
+RICEVI = False
+GRUPPI = False
 
 class App(QWidget):
-    s = socket.socket()
+    
     CONNECTED = False
     datachrs = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', \
                 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',\
-                 'w', 'x', 'y', 'z','1','2','3','4','5','6','7','8','9','0', \
-                 '?','/',',','.','=']
-
+                'w', 'x', 'y', 'z','1','2','3','4','5','6','7','8','9','0', \
+                '?','/',',','.','=']
+    
     def __init__(self):
         super().__init__()
         self.title = 'Morse Trainer'
@@ -134,78 +143,50 @@ class App(QWidget):
 
     def connect_click(self):
         if(self.CONNECTED == False):
+            global host
+            global port
             host = self.ipadr.text()
             port = int(self.port.text())
-            self.conn_sub_server((host,port))  
+            self.tcpClient = clientTCP()
+            self.tcpClient.actionDone.connect(self.onTCPflag)
+            self.conn_sub_server()
         else:
-            #self.rt.stop()
             self.invia_comandi("ESC") 
 
-    def send_click(self):
-        if(self.radiob.isChecked() == False):
-            data = self.xmt.toPlainText()
-            riga = data.split("\n")
-            l = len(riga)
-            testo = riga[l-2]
-            print(testo) # stampa ultima riga (da ultimo \n in poi)
-            self.invia_comandi(testo)
-            data = self.s.recv(4096)
-            data = str(data, "utf-8")
-            self.rcv.append("Dati da transmit box: "+data )
-            print(data)
-        else:
-            # crea 10 gruppi random di 5 chars in una stringa
-            print("preparo 10 gruppi di 5 chars")
-            self.inviaGruppi()
-        
 
-    def set_speed_click(self):
-        speed = self.cmbspeed.currentText()
-        print(speed)
-        self.invia_comandi(speed)
-        data = self.s.recv(4096)
-        print(str(data, "utf-8"))
-        self.rcv.append(speed+' '+str(data,"utf-8"))
-
-
-    def tone_click(self):
-        tone = self.cmbtone.currentText()
-        print("Tone Hz: "+tone )
-        self.invia_comandi(tone)
-        data = self.s.recv(4096)
-        print(str(data, "utf-8"))
-        self.rcv.append("Tone "+tone+'Hz '+str(data,"utf-8"))
-
-
-    def conn_sub_server(self,indirizzo_server):
+    def conn_sub_server(self):
         try:
-            self.s.connect(indirizzo_server)     # connessione al server
-            print(f"Connessessione al Server: { indirizzo_server } effettuata.")
+            global host
+            global port
+            clientSock.connect((host,port))     # connessione al server
+            print(f"Connessessione al Server: { (host,port) } effettuata.")
             self.CONNECTED = True
+            self.repeatSend = RepeatedTimer()
+            self.repeatSend.countChanged.connect(self.onCountChanged)
             self.connbtn.setText("CLOSE")
+            self.tcpClient.start()
         except socket.error as errore:
-            print(f"Qualcosa è andato storto, sto uscendo... \n{errore}")
+            print(f"Azz.. qualcosa è andato storto, sto uscendo... \n{errore}")
             sys.exit()
-        data = self.s.recv(4096)
-        print(str(data, "utf-8"))
-        self.repeatSend = RepeatedTimer()
-        self.repeatSend.countChanged.connect(self.onCountChanged)
-        self.rcv.append(str(data,"utf-8"))
 
 
-    def onCountChanged(self, value):
-        currTime = datetime.datetime.now().strftime("%H:%M:%S")
-        if(self.radiob1.isChecked() == False):
-            print("Nothing to do at "+currTime)
+    def invia_comandi(self,comando):
+        global sendData
+        sendData = comando
+        if comando == "ESC":
+            print("Sto chiudendo la connessione col Server.")
+            clientSock.close()
+            self.rcv.append("Chiuso connessione con host")
+            self.CONNECTED = False
+            self.connbtn.setText("CONNECT")  
         else:
-            self.repeatSend.start()
-            if(value == 0):
-                self.rcv.append("Preparo trasmissione 10 gruppi 5chars at "+currTime)
-            else:
-                self.inviaGruppi()
+            comando = comando+"\r\n"
+            clientSock.send(comando.encode())
             
 
     def inviaGruppi(self):
+        global GRUPPI
+        GRUPPI = True
         i = 0
         j = 0
         s = ""
@@ -219,28 +200,90 @@ class App(QWidget):
             j = 0
         s = s.upper()
         print(s)
+        currTime = datetime.datetime.now().strftime("%H:%M:%S")
+        self.rcv.append("Inviato gruppi di chars at "+currTime) 
         self.invia_comandi(s)
-        data = self.s.recv(4096)
-        data = str(data,"utf-8")
-        self.rcv.append("Invio gruppi di chars: "+data)
-        print(data)
-        self.xmt.append(s)
 
 
-    def invia_comandi(self,comando):
-        if comando == "ESC":
-            print("Sto chiudendo la connessione col Server.")
-            self.s.close()
-            sys.exit()
+    def send_click(self):
+        if(self.CONNECTED == True):
+            if(self.radiob.isChecked() == False):
+                data = self.xmt.toPlainText()
+                riga = data.split("\n")
+                l = len(riga)
+                testo = riga[l-2]
+                print(testo) # stampa ultima riga (da ultimo \n in poi)
+                self.invia_comandi(testo)
+            else:
+                # crea 10 gruppi random di 5 chars in una stringa
+                print("preparo 10 gruppi di 5 chars")
+                self.inviaGruppi()
+        
+
+    def set_speed_click(self):
+        speed = self.cmbspeed.currentText()
+        if(self.CONNECTED == True):
+            print(speed)
+            self.invia_comandi(speed)
+
+    def tone_click(self):
+        tone = self.cmbtone.currentText()
+        if(self.CONNECTED == True):
+            print("Tone Hz: "+tone )
+            self.invia_comandi(tone)
+
+    def onTCPflag(self,value):
+        if(value == 2): # ricevuto dati
+            global rcvData
+            global sendData
+            global GRUPPI
+            print(rcvData)
+            if(GRUPPI == True):
+                GRUPPI = False
+                self.xmt.append(sendData)
+            elif(sendData == "ESC"):
+                self.connbtn.setText("CONNECT") 
+            elif(sendData[2:5] == "wpm" or sendData[1:4] == "wpm"):
+                self.rcv.append(sendData+" "+rcvData)
+            elif(sendData[1:3] == "00"):
+                self.rcv.append("Tone "+sendData+"Hz "+rcvData)
+            else:
+                self.rcv.append(sendData+" "+rcvData)
+            
+
+    def onCountChanged(self, value):
+        currTime = datetime.datetime.now().strftime("%H:%M:%S")
+        if(self.radiob1.isChecked() == False):
+            print("Nothing to do at "+currTime)
         else:
-            comando = comando+"\r\n"
-            self.s.send(comando.encode())
+            self.repeatSend.start()
+            if(value == 0):
+                self.rcv.append("Preparo trasmissione 10 gruppi 5chars at "+currTime)
+            else:
+                self.inviaGruppi()
 
+
+    
+class clientTCP(QThread):
+    actionDone = pyqtSignal(int)
+    RUNNING = True
+    
+    def run(self):
+        print("clientTCP started")
+        while(self.RUNNING == True):  
+            global rcvData
+            try:
+                rcvData = clientSock.recv(4096)
+                rcvData = str(rcvData,"utf-8")
+                print(rcvData)
+                self.actionDone.emit(2)
+            except:
+                self.RUNNING = False
+        print("clientTCP terminated")
+   
 
 class RepeatedTimer(QThread):
-
     countChanged = pyqtSignal(int)
-
     def run(self):
         print("Start timer")
         count = 0
@@ -255,7 +298,6 @@ class RepeatedTimer(QThread):
         self.is_running = False
         self.terminate()
          
-
 
 
 if __name__ == '__main__':

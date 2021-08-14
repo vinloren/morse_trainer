@@ -1,13 +1,15 @@
+from os import truncate
 import socket
 import sys
 import random
 import threading
 import datetime
 import time
+from typing import Text
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget,  \
             QVBoxLayout,QHBoxLayout,QLineEdit,QTextEdit,QLabel,QCheckBox, \
-            QPushButton,QRadioButton,QComboBox    
+            QPushButton,QRadioButton,QComboBox,QLineEdit   
 
 TIME_LIMIT = 120
 clientSock = socket.socket()
@@ -84,7 +86,9 @@ class App(QWidget):
         xmtlbl = QLabel("Transmit")
         rcvlbl = QLabel("Receive")
         self.xmt = QTextEdit()
+        self.xmt.setFontFamily("courier")
         self.rcv = QTextEdit()
+        self.rcv.setFontFamily("courier")
         hmed.addWidget(xmtlbl)
         hmed.addWidget(rcvlbl)
         hnbot = QHBoxLayout()
@@ -113,6 +117,14 @@ class App(QWidget):
         hlast.addWidget(self.radiob1)
         hlast.addWidget(self.radiob2)
         self.layout.addLayout(hlast)
+        hnlast = QHBoxLayout()
+        self.ckbutt =  QPushButton("CHECK TEST",self)
+        self.intext = QLineEdit()
+        hnlast.addWidget(self.ckbutt)
+        hnlast.addWidget(self.intext)
+        self.ckbutt.clicked.connect(self.checktest)
+        self.ckbutt.setEnabled(False)
+        self.layout.addLayout(hnlast)
         self.sendbtn = QPushButton("SEND DATA",self)
         self.sendbtn.clicked.connect(self.send_click)
         self.layout.addWidget(self.sendbtn)
@@ -134,6 +146,55 @@ class App(QWidget):
         print("Invio da transmit box")
         self.sendbtn.setEnabled(True)
 
+    def checktest(self):
+        print("checktest")
+        text = self.intext.text()
+        text = text.upper()
+        global sendData
+        # compara dati scritti in intext capiti da morse code con
+        # quelli realmente trasmessi. Riporta errori in rcv box.
+        words = sendData.strip().split(' ')
+        print(str(len(words))+" gruppi")
+        if(len(words) != 10):
+            self.rcv.append("Non ci sono gruppi da verificare")
+            return
+        i = 0
+        ok = 0
+        if(text == ""):
+            return
+        test = text.split(' ')
+        if(len(test) != 10):
+            self.rcv.append("CHECK TEST non contiene 10 gruppi di chars")
+            return
+        indice = []
+        errs = 0
+        terrs = 0
+        while(i < len(words)):
+            if(words[i] == test[i]):
+                ok += 1
+            else:
+                indice.append(i)
+            i += 1
+        if(ok == len(words)):
+            self.rcv.append("Tutti i gruppi ricevuti sono corretti.")
+        else:
+            for i in indice:
+                reale = words[i]
+                rcvt = test[i]
+                j = 0
+                while(j<5):
+                    if(reale[j] != rcvt[j]):
+                        errs += 1
+                    j += 1
+                msg = "Reale "+reale+" Ricevuto "+rcvt+" "+str(errs)+" err"
+                print(msg)
+                self.rcv.append(msg)
+                terrs += errs
+                errs = 0
+            msg = "Totale errori: "+str(terrs)+" su 50 chars."
+            print(msg)
+            self.rcv.append(msg)
+
 
     def clear_snd(self):
         self.xmt.clear()
@@ -145,11 +206,15 @@ class App(QWidget):
         if(self.CONNECTED == False):
             global host
             global port
+            global clientSock 
+            clientSock.close()
+            clientSock = socket.socket()
             host = self.ipadr.text()
             port = int(self.port.text())
             self.tcpClient = clientTCP()
             self.tcpClient.actionDone.connect(self.onTCPflag)
             self.conn_sub_server()
+            self.connbtn.setText("CLOSE")
         else:
             self.invia_comandi("ESC") 
 
@@ -163,8 +228,8 @@ class App(QWidget):
             self.CONNECTED = True
             self.repeatSend = RepeatedTimer()
             self.repeatSend.countChanged.connect(self.onCountChanged)
-            self.connbtn.setText("CLOSE")
             self.tcpClient.start()
+            self.ckbutt.setEnabled(True)
         except socket.error as errore:
             print(f"Azz.. qualcosa è andato storto, sto uscendo... \n{errore}")
             sys.exit()
@@ -216,7 +281,6 @@ class App(QWidget):
                 self.invia_comandi(testo)
             else:
                 # crea 10 gruppi random di 5 chars in una stringa
-                print("preparo 10 gruppi di 5 chars")
                 self.inviaGruppi()
         
 

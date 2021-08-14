@@ -248,7 +248,10 @@ class App(QWidget):
             elif(sendData[1:3] == "00"):
                 self.rcv.append("Tone "+sendData+"Hz "+rcvData)
             else:
-                self.rcv.append(sendData+" "+rcvData)
+                if(sendData == ""):
+                    self.rcv.append(rcvData)
+                else:
+                    self.rcv.append(sendData+" "+rcvData)
             
 
     def onCountChanged(self, value):

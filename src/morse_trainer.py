@@ -278,7 +278,6 @@ class clientTCP(QThread):
             try:
                 rcvData = clientSock.recv(4096)
                 rcvData = str(rcvData,"utf-8")
-                print(rcvData)
                 self.actionDone.emit(2)
             except:
                 self.RUNNING = False

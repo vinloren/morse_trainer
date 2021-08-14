@@ -309,9 +309,14 @@ class App(QWidget):
                 self.connbtn.setText("CONNECT") 
             elif(sendData[2:5] == "wpm" or sendData[1:4] == "wpm"):
                 self.rcv.append(sendData+" "+rcvData)
+                global TIME_LIMIT
+                if(sendData == "5wpm"):
+                    TIME_LIMIT = 210
+                else:
+                    TIME_LIMIT = 120
             elif(sendData[1:3] == "00"):
                 self.rcv.append("Tone "+sendData+"Hz "+rcvData)
-            else:
+            else: 
                 if(sendData == ""):
                     self.rcv.append(rcvData)
                 else:

@@ -130,7 +130,7 @@ class App(QWidget):
         self.layout.addWidget(self.sendbtn)
         self.radiob2.setChecked(True)
         #hhome.addWidget(voidlbl)
-        self.setGeometry(100, 50, 620,400)
+        self.setGeometry(100, 50, 630,400)
         self.show()
 
     def checkb(self):
@@ -316,6 +316,8 @@ class App(QWidget):
             if(GRUPPI == True):
                 GRUPPI = False
                 self.xmt.append(sendData)
+                currTime = datetime.datetime.now().strftime("%H:%M:%S")
+                self.rcv.append("Fine tramissione gruppi at: "+currTime)
             elif(sendData == "ESC"):
                 self.connbtn.setText("CONNECT") 
             elif(sendData[2:5] == "wpm" or sendData[1:4] == "wpm"):

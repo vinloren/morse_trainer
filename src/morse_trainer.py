@@ -134,11 +134,11 @@ class App(QWidget):
         self.show()
 
     def checkb(self):
-        print("Invio 10 gruppi di 5 chars")
         self.sendbtn.setEnabled(True)
 
     def checkb1(self):
-        print("Invio continuo di 10 gruppi di 5 chars")
+        currTime = datetime.datetime.now().strftime("%H:%M:%S")
+        self.rcv.append("Invio continuo di 10 gruppi di 5 chars at: "+currTime)
         self.repeatSend.start()
         self.sendbtn.setEnabled(False)
 
@@ -277,7 +277,6 @@ class App(QWidget):
         s = s.upper()
         print(s)
         currTime = datetime.datetime.now().strftime("%H:%M:%S")
-        #self.rcv.append("Inviato gruppi di chars at "+currTime) 
         self.invia_comandi(s)
 
 
@@ -292,6 +291,8 @@ class App(QWidget):
                 self.invia_comandi(testo)
             else:
                 # crea 10 gruppi random di 5 chars in una stringa
+                currTime = datetime.datetime.now().strftime("%H:%M:%S")
+                self.rcv.append("Inizio trasmissione 10 gruppi 5chars at: "+currTime)
                 self.inviaGruppi()
         
 

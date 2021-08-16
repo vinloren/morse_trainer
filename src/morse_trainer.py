@@ -156,15 +156,20 @@ class App(QWidget):
         words = sendData.strip().split(' ')
         print(str(len(words))+" gruppi")
         if(len(words) != 10):
-            self.rcv.append("Non ci sono gruppi da verificare")
-            return
+            self.rcv.append("Non ci sono gruppi da verificare.")
+        else:
+            for word in words:
+                if(len(word) != 5):
+                    self.rcv.append("Non ci sono gruppi da verificare.")
+                    return    
         i = 0
         ok = 0
         if(text == ""):
+            self.rcv.append("CHECK TEST è vuoto.")
             return
         test = text.split(' ')
         if(len(test) != 10):
-            self.rcv.append("CHECK TEST non contiene 10 gruppi di chars")
+            self.rcv.append("CHECK TEST non contiene 10 gruppi di chars.")
             return
         indice = []
         errs = 0
@@ -175,6 +180,7 @@ class App(QWidget):
             else:
                 indice.append(i)
             i += 1
+            
         if(ok == len(words)):
             self.rcv.append("Tutti i gruppi ricevuti sono corretti.")
         else:

@@ -32,7 +32,7 @@ class App(QWidget):
     
     def __init__(self):
         super().__init__()
-        self.title = 'Morse Trainer'
+        self.setWindowTitle('Morse Trainer')
         self.initUI()
 
     def initUI(self):

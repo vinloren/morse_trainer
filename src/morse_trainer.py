@@ -157,23 +157,28 @@ class App(QWidget):
         print(str(len(words))+" gruppi")
         if(len(words) != 10):
             self.rcv.append("Non ci sono gruppi da verificare.")
+            return
         else:
             for word in words:
                 if(len(word) != 5):
                     self.rcv.append("Non ci sono gruppi da verificare.")
                     return    
-        i = 0
         ok = 0
         if(text == ""):
             self.rcv.append("CHECK TEST è vuoto.")
             return
         test = text.split(' ')
-        if(len(test) != 10):
-            self.rcv.append("CHECK TEST non contiene 10 gruppi di chars.")
+        i = 0
+        for testo in test:
+            if (len(testo) == 5):
+                i += 1
+        if(i != 10):
+            self.rcv.append("CHECK TEST non contiene 10 gruppi di 5 chars.")
             return
         indice = []
         errs = 0
         terrs = 0
+        i = 0
         while(i < len(words)):
             if(words[i] == test[i]):
                 ok += 1
@@ -272,7 +277,7 @@ class App(QWidget):
         s = s.upper()
         print(s)
         currTime = datetime.datetime.now().strftime("%H:%M:%S")
-        self.rcv.append("Inviato gruppi di chars at "+currTime) 
+        #self.rcv.append("Inviato gruppi di chars at "+currTime) 
         self.invia_comandi(s)
 
 
@@ -334,11 +339,11 @@ class App(QWidget):
         if(self.radiob1.isChecked() == False):
             print("Nothing to do at "+currTime)
         else:
-            self.repeatSend.start()
             if(value == 0):
-                self.rcv.append("Preparo trasmissione 10 gruppi 5chars at "+currTime)
-            else:
+                self.rcv.append("Inizio trasmissione 10 gruppi 5chars at "+currTime)
                 self.inviaGruppi()
+            else:
+                self.repeatSend.start()
 
 
     

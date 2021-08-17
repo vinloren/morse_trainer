@@ -1,4 +1,4 @@
-from os import truncate
+from os import defpath, truncate
 import socket
 import sys
 import random
@@ -25,6 +25,7 @@ GRUPPI = False
 class App(QWidget):
     
     CONNECTED = False
+    charspace = 1
     datachrs = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', \
                 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',\
                 'w', 'x', 'y', 'z','1','2','3','4','5','6','7','8','9','0', \
@@ -33,6 +34,7 @@ class App(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Morse Trainer')
+        self.setFixedSize(630, 400)
         self.initUI()
 
     def initUI(self):
@@ -44,8 +46,8 @@ class App(QWidget):
         self.port = QLineEdit()
         self.ipadr.setText("192.168.1.5")
         self.port.setText("8888")
-        voidlbl = QLabel("")
-        voidlbl.setMinimumWidth(5)
+        #voidlbl = QLabel("")
+        #voidlbl.setMinimumWidth(30)
         speedbtn = QPushButton("SET",self)
         speedbtn.clicked.connect(self.set_speed_click)
         speedbtn.setMaximumWidth(50)
@@ -84,13 +86,17 @@ class App(QWidget):
         hhome.addWidget(self.cmbtone)
         hmed = QHBoxLayout()
         xmtlbl = QLabel("Transmit")
+        xmtlbl.setMinimumWidth(303)
         rcvlbl = QLabel("Receive")
+        self.spbchr = QCheckBox("Double space between chars")
+        self.spbchr.clicked.connect(self.spbchr_click)
         self.xmt = QTextEdit()
         self.xmt.setFontFamily("courier")
         self.rcv = QTextEdit()
         self.rcv.setFontFamily("courier")
         hmed.addWidget(xmtlbl)
         hmed.addWidget(rcvlbl)
+        hmed.addWidget(self.spbchr)
         hnbot = QHBoxLayout()
         clearsnd = QPushButton("CLEAR",self)
         clearrcv = QPushButton("CLEAR",self)
@@ -129,9 +135,17 @@ class App(QWidget):
         self.sendbtn.clicked.connect(self.send_click)
         self.layout.addWidget(self.sendbtn)
         self.radiob2.setChecked(True)
-        #hhome.addWidget(voidlbl)
         self.setGeometry(100, 50, 630,400)
         self.show()
+
+
+    def spbchr_click(self):
+        if(self.spbchr.isChecked() == True):
+            print("Double space")
+            self.charspace = 2
+        else:
+            print("Single space")
+            self.charspace = 1
 
     def checkb(self):
         self.sendbtn.setEnabled(True)
@@ -301,7 +315,7 @@ class App(QWidget):
         if(self.CONNECTED == True):
             print(speed)
             self.invia_comandi(speed)
-
+           
     def tone_click(self):
         tone = self.cmbtone.currentText()
         if(self.CONNECTED == True):
@@ -313,6 +327,7 @@ class App(QWidget):
             global rcvData
             global sendData
             global GRUPPI
+            global TIME_LIMIT
             print(rcvData)
             if(GRUPPI == True):
                 GRUPPI = False
@@ -323,11 +338,17 @@ class App(QWidget):
                 self.connbtn.setText("CONNECT") 
             elif(sendData[2:5] == "wpm" or sendData[1:4] == "wpm"):
                 self.rcv.append(sendData+" "+rcvData)
-                global TIME_LIMIT
                 if(sendData == "5wpm"):
                     TIME_LIMIT = 210
                 else:
                     TIME_LIMIT = 120
+                sp = "charspace"+str(self.charspace)
+                self.invia_comandi(sp)
+            elif(sendData == "charspace2"):
+                TIME_LIMIT = 2*TIME_LIMIT
+                self.rcv.append(sendData+" "+rcvData)
+            elif(sendData == "charspace1"):
+                self.rcv.append(sendData+" "+rcvData)
             elif(sendData[1:3] == "00"):
                 self.rcv.append("Tone "+sendData+"Hz "+rcvData)
             else: 

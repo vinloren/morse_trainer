@@ -115,6 +115,7 @@ class App(QWidget):
         self.radiob = QRadioButton("Send 10 groups of 5 random chars")
         self.radiob1 = QRadioButton("Automatic sending groups of 5 chars")
         self.radiob2 = QRadioButton("Send from transmit box")
+        self.repeat = QCheckBox("Repeat send")
         self.radiob.clicked.connect(self.checkb)
         self.radiob1.clicked.connect(self.checkb1)
         self.radiob2.clicked.connect(self.checkb2)
@@ -122,6 +123,7 @@ class App(QWidget):
         hlast.addWidget(self.radiob)
         hlast.addWidget(self.radiob1)
         hlast.addWidget(self.radiob2)
+        hlast.addWidget(self.repeat)
         self.layout.addLayout(hlast)
         hnlast = QHBoxLayout()
         self.ckbutt =  QPushButton("CHECK TEST",self)
@@ -356,7 +358,11 @@ class App(QWidget):
                     self.rcv.append(rcvData)
                 else:
                     self.rcv.append(sendData+" "+rcvData)
-            
+                    if(self.repeat.isChecked() == True):
+                        if(self.radiob1.isChecked() == False):
+                            time.sleep(2)
+                            self.invia_comandi(sendData)
+
 
     def onCountChanged(self, value):
         currTime = datetime.datetime.now().strftime("%H:%M:%S")

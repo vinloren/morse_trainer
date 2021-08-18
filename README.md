@@ -11,7 +11,7 @@ Basically the text entered in the transmit window is sent to the keyer to be pla
 
 This way the user can test his ability and trained to improve it comparing the data detected in morse with the final display of what was actually sent. The codes values interpreted listening to the buzzer can be written in the CHECK TEST text box and the response regarding its correctness can be gotten clicking the push button. Each sequence can be easyly repeated since it is kept in the transmit window.
 
-Another added feature is the possibility to continuosly send 10 groups of 5 random chars every two minutes.
+Other added features are the possibility to continuosly send 10 groups of 5 random chars every two minutes or continuosly send what is in the transmit pane if the "Repeat send" checkbox is checked.
 
 ### standar time spacing between morse sounds
 The standard time spacing between dit / dah is 1 dit, the spacing between characters is 3xdit, the spacing between words is 7xdit. The application provides the possibility to double those spacing time just checking the "Double space between chars" checkbox to instruct the conpanion TCP keyer server. This is an additional feature aimed to ease the learnig curve of the morse code.

@@ -116,7 +116,7 @@ class App(QWidget):
         self.layout.addLayout(hbot)
         self.layout.addLayout(hnbot)
         self.radiob = QRadioButton("Send 10 groups of 5 random chars")
-        self.radiob1 = QRadioButton("Automatic sending groups of 5 chars")
+        self.radiob1 = QRadioButton("Automatic sending groups of chars")
         self.radiob2 = QRadioButton("Send from transmit box")
         self.repeat = QCheckBox("Repeat send")
         self.radiob.clicked.connect(self.checkb)

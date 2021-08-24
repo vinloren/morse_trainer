@@ -86,7 +86,9 @@ class App(QWidget):
         hhome.addWidget(self.cmbtone)
         hmed = QHBoxLayout()
         xmtlbl = QLabel("Transmit")
-        xmtlbl.setMinimumWidth(303)
+        self.vblbl = QLabel("Vbatt: n/a")
+        self.vblbl.setMinimumWidth(144)
+        xmtlbl.setMinimumWidth(153)
         rcvlbl = QLabel("Receive")
         self.spbchr = QCheckBox("Double space between chars")
         self.spbchr.clicked.connect(self.spbchr_click)
@@ -95,6 +97,7 @@ class App(QWidget):
         self.rcv = QTextEdit()
         self.rcv.setFontFamily("courier")
         hmed.addWidget(xmtlbl)
+        hmed.addWidget(self.vblbl)
         hmed.addWidget(rcvlbl)
         hmed.addWidget(self.spbchr)
         hnbot = QHBoxLayout()
@@ -325,11 +328,11 @@ class App(QWidget):
             self.invia_comandi(tone)
 
     def onTCPflag(self,value):
+        global rcvData
+        global sendData
+        global GRUPPI
+        global TIME_LIMIT
         if(value == 2): # ricevuto dati
-            global rcvData
-            global sendData
-            global GRUPPI
-            global TIME_LIMIT
             print(rcvData)
             if(GRUPPI == True):
                 GRUPPI = False
@@ -362,7 +365,9 @@ class App(QWidget):
                         if(self.radiob1.isChecked() == False):
                             time.sleep(2)
                             self.invia_comandi(sendData)
-
+        elif(value == 3): # ricevuto vbatt
+            vbatt = "Vbatt: "+rcvData
+            self.vblbl.setText(vbatt)
 
     def onCountChanged(self, value):
         currTime = datetime.datetime.now().strftime("%H:%M:%S")
@@ -388,7 +393,12 @@ class clientTCP(QThread):
             try:
                 rcvData = clientSock.recv(4096)
                 rcvData = str(rcvData,"utf-8")
-                self.actionDone.emit(2)
+                if(rcvData == "Ack"):
+                    self.actionDone.emit(2)
+                elif(rcvData[0:2] == "3."):
+                    self.actionDone.emit(3)
+                else:
+                    self.actionDone.emit(2)    
             except:
                 self.RUNNING = False
         print("clientTCP terminated")

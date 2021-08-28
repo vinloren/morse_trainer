@@ -39,6 +39,7 @@ class App(QWidget):
 
     def initUI(self):
         self.connbtn = QPushButton("CONNECT",self)
+        self.connbtn.setCheckable(True)
         self.connbtn.clicked.connect(self.connect_click)
         iplbl = QLabel("Host IP:")
         portlbl = QLabel("Port:")
@@ -233,7 +234,12 @@ class App(QWidget):
         self.rcv.clear()
 
     def connect_click(self):
-        if(self.CONNECTED == False):
+        if self.connbtn.isChecked():
+            self.connbtn.setText("CLOSE")
+        else:
+            self.connbtn.setText("CONNECT")
+
+        if(self.connbtn.text( ) == "CLOSE"):
             global host
             global port
             global clientSock 
@@ -244,7 +250,6 @@ class App(QWidget):
             self.tcpClient = clientTCP()
             self.tcpClient.actionDone.connect(self.onTCPflag)
             self.conn_sub_server()
-            self.connbtn.setText("CLOSE")
         else:
             self.invia_comandi("ESC") 
 
@@ -273,7 +278,6 @@ class App(QWidget):
             clientSock.close()
             self.rcv.append("Chiuso connessione con host")
             self.CONNECTED = False
-            self.connbtn.setText("CONNECT")  
         else:
             comando = comando+"\r\n"
             clientSock.send(comando.encode())
@@ -339,8 +343,6 @@ class App(QWidget):
                 self.xmt.append(sendData)
                 currTime = datetime.datetime.now().strftime("%H:%M:%S")
                 self.rcv.append("Fine tramissione gruppi at: "+currTime)
-            elif(sendData == "ESC"):
-                self.connbtn.setText("CONNECT") 
             elif(sendData[2:5] == "wpm" or sendData[1:4] == "wpm"):
                 self.rcv.append(sendData+" "+rcvData)
                 if(sendData == "5wpm"):
@@ -357,7 +359,7 @@ class App(QWidget):
             elif(sendData[1:3] == "00"):
                 self.rcv.append("Tone "+sendData+"Hz "+rcvData)
             else: 
-                if(sendData == ""):
+                if(sendData == "" or sendData == "ESC"):
                     self.rcv.append(rcvData)
                 else:
                     self.rcv.append(sendData+" "+rcvData)
@@ -368,6 +370,7 @@ class App(QWidget):
         elif(value == 3): # ricevuto vbatt
             vbatt = "Vbatt: "+rcvData
             self.vblbl.setText(vbatt)
+
 
     def onCountChanged(self, value):
         currTime = datetime.datetime.now().strftime("%H:%M:%S")
